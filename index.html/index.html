@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game - Psy</title>
+    <style>
+        /* Styl ogólny */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            gap: 15px;
+        }
+
+        .card {
+            width: 120px;
+            height: 160px;
+            background-color: #444;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            transform: rotateY(180deg);
+            transition: transform 0.5s;
+        }
+
+        .card.flipped img {
+            transform: rotateY(0);
+        }
+
+        .card::before {
+            content: "";
+            width: 100%;
+            height: 100%;
+            background-color: #333;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 10px;
+            backface-visibility: hidden;
+            transition: transform 0.5s;
+        }
+
+        .card.flipped::before {
+            transform: rotateY(180deg);
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .restart-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            display: none;
+        }
+
+        .message.win {
+            color: green;
+        }
+
+        .message.lose {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Memory Game - Psy</h1>
+    <div class="game-board"></div>
+    <div class="message"></div>
+    <button class="restart-btn" onclick="startGame()">Restart</button>
+
+    <script>
+        const imagePaths = [
+            "dog1.jpg",
+            "dog2.jpg",
+            "dog3.jpg"
+        ];
+
+        const board = document.querySelector('.game-board');
+        const message = document.querySelector('.message');
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        const maxMoves = 15; // Maksymalna liczba ruchów na przegraną
+
+        function startGame() {
+            // Resetowanie gry
+            board.innerHTML = "";
+            flippedCards = [];
+            matchedPairs = 0;
+            moves = 0;
+            message.style.display = "none";
+            message.className = "message";
+            message.textContent = "";
+            
+            // Tasowanie kart
+            cards = [...imagePaths, ...imagePaths].sort(() => Math.random() - 0.5);
+
+            // Tworzenie planszy
+            cards.forEach((image, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.index = index;
+                card.innerHTML = `<img src="${image}" alt="Pies">`;
+                board.appendChild(card);
+            });
+
+            board.addEventListener('click', handleCardClick);
+        }
+
+        function handleCardClick(e) {
+            const clickedCard = e.target.closest('.card');
+            if (!clickedCard || clickedCard.classList.contains('flipped') || flippedCards.length === 2) return;
+
+            flipCard(clickedCard);
+            flippedCards.push(clickedCard);
+
+            if (flippedCards.length === 2) {
+                checkForMatch();
+            }
+        }
+
+        function flipCard(card) {
+            card.classList.add('flipped');
+        }
+
+        function checkForMatch() {
+            const [firstCard, secondCard] = flippedCards;
+            const firstImage = firstCard.querySelector('img').src;
+            const secondImage = secondCard.querySelector('img').src;
+
+            moves++;
+            if (firstImage === secondImage) {
+                matchedPairs++;
+                flippedCards = [];
+                if (matchedPairs === imagePaths.length) {
+                    showWinMessage();
+                }
+            } else {
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    flippedCards = [];
+                }, 1000);
+            }
+
+            // Sprawdzenie przegranej
+            if (moves >= maxMoves && matchedPairs < imagePaths.length) {
+                showLoseMessage();
+            }
+        }
+
+        function showWinMessage() {
+            message.style.display = "block";
+            message.classList.add("win");
+            message.textContent = "Gratulacje! Wygrałeś!";
+            board.removeEventListener('click', handleCardClick);
+        }
+
+        function showLoseMessage() {
+            message.style.display = "block";
+            message.classList.add("lose");
+            message.textContent = "Przegrałeś! Wykorzystałeś wszystkie ruchy.";
+            board.removeEventListener('click', handleCardClick);
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
